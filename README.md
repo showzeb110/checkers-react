@@ -1,3 +1,6 @@
+This is my first react project. The goal is to make a checkers game
+
+
 This project was bootstrapped with [Create React App](https://github.com/facebookincubator/create-react-app).
 
 Below you will find some information on how to perform common tasks.<br>
