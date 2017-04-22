@@ -1,0 +1,45 @@
+.board-row:after {
+  clear: both;
+  content: "";
+  display: table;
+}
+
+.bottomLabel {
+    float: left;
+    width: 34px;
+    text-align: center;
+}
+.rowLabel {
+    float: left;
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.squareOdd {
+  background: #00cc66;
+  border: 1px solid #999;
+  float: left;
+  line-height: 34px;
+  height: 34px;
+  margin-right: -1px;
+  margin-top: -1px;
+  padding: 0;
+  text-align: center;
+  width: 34px;
+}
+
+.squareEven {
+  background: #009900;
+  border: 1px solid #999;
+  float: left;
+  font-size: 24px;
+  font-weight: bold;
+  line-height: 34px;
+  height: 34px;
+  margin-right: -1px;
+  margin-top: -1px;
+  padding: 0;
+  text-align: center;
+  width: 34px;
+}
