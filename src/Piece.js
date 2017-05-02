@@ -2,8 +2,10 @@ import React from 'react';
 
 import "./board.css";
 
-const Piece = ({color}) => (
-    <button className={color}>
+const Piece = ({color, onClick}) => (
+    <button 
+        className={color}
+        onClick={onClick} >
         
     </button>
 )

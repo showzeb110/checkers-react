@@ -44,6 +44,10 @@
   width: 34px;
 }
 
+.selected {
+    background: blue;
+}
+
 .piece {
     position:absolute;
     width:32px;
