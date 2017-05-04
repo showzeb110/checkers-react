@@ -57,15 +57,15 @@ class Board extends Component {
 
         return (
             <div>
-                <div>
+                <div className="board">
                     {row.map(i => {
                         return (
                             <div key={i} className="board-row">
-                                <Label key={i.toString() + "Label"} className="rowLabel" text={i.toString()} />
+                                {/*<Label key={i.toString() + "Label"} className="rowLabel" text={i.toString()} />*/}
                                 {row.map(j => {
-                                    var col = "squareOdd";
+                                    var col = "square light";
                                     if ( (j+i) % 2 === 0) {
-                                        col = "squareEven";
+                                        col = "square dark";
                                     }
                                     return ( 
                                             <Square 
@@ -81,15 +81,15 @@ class Board extends Component {
                             </div>
                         )
                     })}
-                    <div className="board-row">
+                    {/*<div className="board-row">
                         {bottomLabel.map(k => {
                             return (<Label key={k} className="bottomLabel" text={k} />)
                         })}
-                    </div>
+                    </div>*/}
                 </div>
-                <div className="game-info">
+                {/*<div className="game-info">
                     <div>{status}</div>
-                </div>
+                </div>*/}
             </div>
         )
     }
