@@ -10,7 +10,8 @@ class Board extends Component {
         this.state = {
             locations : createInitLocations() ,
             whiteIsNext : true ,
-            currentSelection : ""
+            currentSelection : "" ,
+            nextMoves : null
         };
     }
     
@@ -19,7 +20,7 @@ class Board extends Component {
         const key = row + column;
         if (this.state.currentSelection) {
             //User has previously clicked on valid piece and clicked on another square
-            if (isNextMoveValid(this.state.locations,  this.state.currentSelection, key)) {
+            if (this.state.nextMoves.includes(key)) {
                 let teamStateCopy = JSON.parse(JSON.stringify(this.state.locations)) ;
                 teamStateCopy[key] = teamStateCopy[this.state.currentSelection];
                 teamStateCopy[key].isSelected = false;
@@ -27,24 +28,29 @@ class Board extends Component {
                 this.setState({
                     whiteIsNext : !this.state.whiteIsNext ,
                     locations : teamStateCopy ,
-                    currentSelection : ""
+                    currentSelection : "" ,
+                    nextMoves : null
                 });
             }
         } else {
             let teamStateCopy = JSON.parse(JSON.stringify(this.state.locations)) ;
             if (this.state.whiteIsNext && teamStateCopy[key].team === "white") {
+                let nextMoves = getNextMoves("white", teamStateCopy, key);
                 teamStateCopy[key].isSelected = true;
                 this.setState({
                     whiteIsNext : this.state.whiteIsNext ,
                     locations : teamStateCopy ,
-                    currentSelection : key
+                    currentSelection : key ,
+                    nextMoves : nextMoves
                 });
             } else if (!this.state.whiteIsNext && teamStateCopy[key].team === "red") {
+                let nextMoves = getNextMoves("red", teamStateCopy, key);
                 teamStateCopy[key].isSelected = true;
                 this.setState({
                     whiteIsNext : this.state.whiteIsNext ,
                     locations : teamStateCopy ,
-                    currentSelection : key
+                    currentSelection : key ,
+                    nextMoves : nextMoves
                 });
             }
         }
@@ -87,12 +93,84 @@ class Board extends Component {
                         })}
                     </div>*/}
                 </div>
-                {/*<div className="game-info">
+                <div className="game-info">
                     <div>{status}</div>
-                </div>*/}
+                </div>
             </div>
         )
     }
+}
+
+function getNextMoves(team, locations, currentLoc) {
+    const piece = locations[currentLoc];
+    const bottomLabel = ["h", "g", "f", "e", "d", "c", "b", "a"];
+    const selectionLocRow = parseInt(currentLoc.substring(0, 1));
+    const selectionLocCol = currentLoc.substring(1);
+    const selectionLocColIdx = bottomLabel.indexOf(selectionLocCol);
+    let nextMoves = [];
+
+    if(team === "white") {
+        //bottom-left
+        let botLeft = (selectionLocRow + 1).toString() + bottomLabel[selectionLocColIdx - 1];
+        let botLeftPiece = locations[botLeft];
+        let botRight = (selectionLocRow + 1).toString() + bottomLabel[selectionLocColIdx + 1];
+        let botRightPiece = locations[botRight];
+
+        if (botLeftPiece && botLeftPiece.team !== "white") {
+            if (botLeftPiece === "") {
+                nextMoves.push(botLeft);
+            }
+            if (botLeftPiece.team === "red") {
+                let botLeftBotLeft = (selectionLocRow + 1 + 1).toString() + bottomLabel[selectionLocColIdx - 2];
+                if (locations[botLeftBotLeft] === "") {
+                    nextMoves.push(botLeftBotLeft);
+                }
+            }
+        }
+        if (botRightPiece && botRightPiece.team !== "white") {
+            if (botRightPiece === "") {
+                nextMoves.push(botRight);
+            }
+            if (botRightPiece.team === "red") {
+                let botRightBotRight = (selectionLocRow + 1 + 1).toString() + bottomLabel[selectionLocColIdx + 2];
+                if (locations[botRightBotRight] === "") {
+                    nextMoves.push(botRightBotRight);
+                }
+            }
+        }
+    }
+
+    if(team === "red") {
+        //bottom-left
+        let botLeft = (selectionLocRow - 1).toString() + bottomLabel[selectionLocColIdx - 1];
+        let botLeftPiece = locations[botLeft];
+        let botRight = (selectionLocRow - 1).toString() + bottomLabel[selectionLocColIdx + 1];
+        let botRightPiece = locations[botRight];
+
+        if (botLeftPiece && botLeftPiece.team !== "red") {
+            if (botLeftPiece === "") {
+                nextMoves.push(botLeft);
+            }
+            if (botLeftPiece.team === "white") {
+                let botLeftBotLeft = (selectionLocRow - 1 - 1).toString() + bottomLabel[selectionLocColIdx - 2];
+                if (locations[botLeftBotLeft] === "") {
+                    nextMoves.push(botLeftBotLeft);
+                }
+            }
+        }
+        if (botRightPiece && botRightPiece.team !== "red") {
+            if (botRightPiece === "") {
+                nextMoves.push(botRight);
+            }
+            if (botRightPiece.team === "white") {
+                let botRightBotRight = (selectionLocRow - 1 - 1).toString() + bottomLabel[selectionLocColIdx + 2];
+                if (locations[botRightBotRight] === "") {
+                    nextMoves.push(botRightBotRight);
+                }
+            }
+        }  
+    }
+    return nextMoves;
 }
 
 function isNextMoveValid(locations, pieceLoc, selectionLoc) {
@@ -134,4 +212,5 @@ function createInitLocations() {
                 "8h":{"team":"red", "isKing":false}, "8g":"", "8f":{"team":"red", "isKing":false}, "8e":"", "8d":{"team":"red", "isKing":false}, "8c":"", "8b":{"team":"red", "isKing":false}, "8a":"", 
             };
 }
+
 export default Board
