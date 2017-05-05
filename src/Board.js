@@ -9,9 +9,11 @@ class Board extends Component {
         super();
         this.state = {
             locations : createInitLocations() ,
-            whiteIsNext : true ,
+            blackIsNext : true ,
             currentSelection : "" ,
-            nextMoves : null
+            nextMoves : null ,
+            black : 12 ,
+            red : 12
         };
     }
     
@@ -20,34 +22,47 @@ class Board extends Component {
         const key = row + column;
         if (this.state.currentSelection) {
             //User has previously clicked on valid piece and clicked on another square
-            if (this.state.nextMoves.includes(key)) {
+            if (this.state.nextMoves.hasOwnProperty(key)) {
                 let teamStateCopy = JSON.parse(JSON.stringify(this.state.locations)) ;
+                let capturedChecker = this.state.nextMoves[key];
+                let red = this.state.red;
+                let black = this.state.black;
+                if (capturedChecker !== "") {
+                    if (teamStateCopy[capturedChecker].team === "red") {
+                        red -= 1;
+                    } else {
+                        black -= 1;
+                    }
+                    teamStateCopy[capturedChecker] = "";
+                }
                 teamStateCopy[key] = teamStateCopy[this.state.currentSelection];
                 teamStateCopy[key].isSelected = false;
                 teamStateCopy[this.state.currentSelection] = "";
                 this.setState({
-                    whiteIsNext : !this.state.whiteIsNext ,
+                    blackIsNext : !this.state.blackIsNext ,
                     locations : teamStateCopy ,
                     currentSelection : "" ,
-                    nextMoves : null
+                    nextMoves : null ,
+                    red : red ,
+                    black : black
                 });
             }
         } else {
             let teamStateCopy = JSON.parse(JSON.stringify(this.state.locations)) ;
-            if (this.state.whiteIsNext && teamStateCopy[key].team === "white") {
-                let nextMoves = getNextMoves("white", teamStateCopy, key);
+            if (this.state.blackIsNext && teamStateCopy[key].team === "black") {
+                let nextMoves = getNextMoves("black", teamStateCopy, key);
                 teamStateCopy[key].isSelected = true;
                 this.setState({
-                    whiteIsNext : this.state.whiteIsNext ,
+                    blackIsNext : this.state.blackIsNext ,
                     locations : teamStateCopy ,
                     currentSelection : key ,
                     nextMoves : nextMoves
                 });
-            } else if (!this.state.whiteIsNext && teamStateCopy[key].team === "red") {
+            } else if (!this.state.blackIsNext && teamStateCopy[key].team === "red") {
                 let nextMoves = getNextMoves("red", teamStateCopy, key);
                 teamStateCopy[key].isSelected = true;
                 this.setState({
-                    whiteIsNext : this.state.whiteIsNext ,
+                    blackIsNext : this.state.blackIsNext ,
                     locations : teamStateCopy ,
                     currentSelection : key ,
                     nextMoves : nextMoves
@@ -59,7 +74,9 @@ class Board extends Component {
     render() {
         const row = [1, 2, 3, 4, 5, 6, 7, 8];
         const bottomLabel = ["h", "g", "f", "e", "d", "c", "b", "a"];
-        let status = 'Next player: ' + (this.state.whiteIsNext ? 'White' : 'Red');
+        let status = 'Next player: ' + (this.state.blackIsNext ? 'black' : 'Red');
+        let red = 'Red count: ' + this.state.red;
+        let black = 'Black count: ' + this.state.black;
 
         return (
             <div>
@@ -95,6 +112,8 @@ class Board extends Component {
                 </div>
                 <div className="game-info">
                     <div>{status}</div>
+                    <div>{red}</div>
+                    <div>{black}</div>
                 </div>
             </div>
         )
@@ -107,34 +126,34 @@ function getNextMoves(team, locations, currentLoc) {
     const selectionLocRow = parseInt(currentLoc.substring(0, 1));
     const selectionLocCol = currentLoc.substring(1);
     const selectionLocColIdx = bottomLabel.indexOf(selectionLocCol);
-    let nextMoves = [];
+    let nextMoves = {};
 
-    if(team === "white") {
+    if(team === "black") {
         //bottom-left
         let botLeft = (selectionLocRow + 1).toString() + bottomLabel[selectionLocColIdx - 1];
         let botLeftPiece = locations[botLeft];
         let botRight = (selectionLocRow + 1).toString() + bottomLabel[selectionLocColIdx + 1];
         let botRightPiece = locations[botRight];
 
-        if (botLeftPiece && botLeftPiece.team !== "white") {
+        if (botLeftPiece === "" || (botLeftPiece && botLeftPiece.team !== "black")) {
             if (botLeftPiece === "") {
-                nextMoves.push(botLeft);
+                nextMoves[botLeft] = "";
             }
             if (botLeftPiece.team === "red") {
                 let botLeftBotLeft = (selectionLocRow + 1 + 1).toString() + bottomLabel[selectionLocColIdx - 2];
                 if (locations[botLeftBotLeft] === "") {
-                    nextMoves.push(botLeftBotLeft);
+                    nextMoves[botLeftBotLeft] = botLeft;
                 }
             }
         }
-        if (botRightPiece && botRightPiece.team !== "white") {
+        if (botRightPiece === ""  || (botRightPiece && botRightPiece.team !== "black")) {
             if (botRightPiece === "") {
-                nextMoves.push(botRight);
+                nextMoves[botRight] = "";
             }
             if (botRightPiece.team === "red") {
                 let botRightBotRight = (selectionLocRow + 1 + 1).toString() + bottomLabel[selectionLocColIdx + 2];
                 if (locations[botRightBotRight] === "") {
-                    nextMoves.push(botRightBotRight);
+                    nextMoves[botRightBotRight] = botRight;
                 }
             }
         }
@@ -142,30 +161,30 @@ function getNextMoves(team, locations, currentLoc) {
 
     if(team === "red") {
         //bottom-left
-        let botLeft = (selectionLocRow - 1).toString() + bottomLabel[selectionLocColIdx - 1];
-        let botLeftPiece = locations[botLeft];
-        let botRight = (selectionLocRow - 1).toString() + bottomLabel[selectionLocColIdx + 1];
-        let botRightPiece = locations[botRight];
+        let topLeft = (selectionLocRow - 1).toString() + bottomLabel[selectionLocColIdx - 1];
+        let topLeftPiece = locations[topLeft];
+        let topRight = (selectionLocRow - 1).toString() + bottomLabel[selectionLocColIdx + 1];
+        let topRightPiece = locations[topRight];
 
-        if (botLeftPiece && botLeftPiece.team !== "red") {
-            if (botLeftPiece === "") {
-                nextMoves.push(botLeft);
+        if (topLeftPiece === "" || (topLeftPiece && topLeftPiece.team !== "red")) {
+            if (topLeftPiece === "") {
+                nextMoves[topLeft] = "";
             }
-            if (botLeftPiece.team === "white") {
-                let botLeftBotLeft = (selectionLocRow - 1 - 1).toString() + bottomLabel[selectionLocColIdx - 2];
-                if (locations[botLeftBotLeft] === "") {
-                    nextMoves.push(botLeftBotLeft);
+            if (topLeftPiece.team === "black") {
+                let topLeftTopLeft = (selectionLocRow - 1 - 1).toString() + bottomLabel[selectionLocColIdx - 2];
+                if (locations[topLeftTopLeft] === "") {
+                    nextMoves[topLeftTopLeft] = topLeft;
                 }
             }
         }
-        if (botRightPiece && botRightPiece.team !== "red") {
-            if (botRightPiece === "") {
-                nextMoves.push(botRight);
+        if (topRightPiece === "" || (topRightPiece && topRightPiece.team !== "red")) {
+            if (topRightPiece === "") {
+                nextMoves[topRight] = "";
             }
-            if (botRightPiece.team === "white") {
-                let botRightBotRight = (selectionLocRow - 1 - 1).toString() + bottomLabel[selectionLocColIdx + 2];
-                if (locations[botRightBotRight] === "") {
-                    nextMoves.push(botRightBotRight);
+            if (topRightPiece.team === "black") {
+                let topRightTopRight = (selectionLocRow - 1 - 1).toString() + bottomLabel[selectionLocColIdx + 2];
+                if (locations[topRightTopRight] === "") {
+                    nextMoves[topRightTopRight] = topRight;
                 }
             }
         }  
@@ -184,7 +203,7 @@ function isNextMoveValid(locations, pieceLoc, selectionLoc) {
     const selectionLocCol = selectionLoc.substring(1);
     const selectionLocColIdx = bottomLabel.indexOf(selectionLocCol);
 
-    if (piece.team === "white") {
+    if (piece.team === "black") {
         if(selectionLocRow > pieceLocRow && (selectionLocColIdx + 1 === pieceLocColIdx || selectionLocColIdx - 1 === pieceLocColIdx)) {
             return true;
         } else {
@@ -202,9 +221,9 @@ function isNextMoveValid(locations, pieceLoc, selectionLoc) {
 }
 
 function createInitLocations() {
-    return  {   "1h":"", "1g":{"team":"white", "isKing":false}, "1f":"", "1e":{"team":"white", "isKing":false}, "1d":"", "1c":{"team":"white", "isKing":false}, "1b":"", "1a":{"team":"white", "isKing":false}, 
-                "2h":{"team":"white", "isKing":false}, "2g":"", "2f":{"team":"white", "isKing":false}, "2e":"", "2d":{"team":"white", "isKing":false}, "2c":"", "2b":{"team":"white", "isKing":false}, "2a":"", 
-                "3h":"", "3g":{"team":"white", "isKing":false}, "3f":"", "3e":{"team":"white", "isKing":false}, "3d":"", "3c":{"team":"white", "isKing":false}, "3b":"", "3a":{"team":"white", "isKing":false},
+    return  {   "1h":"", "1g":{"team":"black", "isKing":false}, "1f":"", "1e":{"team":"black", "isKing":false}, "1d":"", "1c":{"team":"black", "isKing":false}, "1b":"", "1a":{"team":"black", "isKing":false}, 
+                "2h":{"team":"black", "isKing":false}, "2g":"", "2f":{"team":"black", "isKing":false}, "2e":"", "2d":{"team":"black", "isKing":false}, "2c":"", "2b":{"team":"black", "isKing":false}, "2a":"", 
+                "3h":"", "3g":{"team":"black", "isKing":false}, "3f":"", "3e":{"team":"black", "isKing":false}, "3d":"", "3c":{"team":"black", "isKing":false}, "3b":"", "3a":{"team":"black", "isKing":false},
                 "4h":"", "4g":"", "4f":"", "4e":"", "4d":"", "4c":"", "4b":"", "4a":"",
                 "5h":"", "5g":"", "5f":"", "5e":"", "5d":"", "5c":"", "5b":"", "5a":"",
                 "6h":{"team":"red", "isKing":false}, "6g":"", "6f":{"team":"red", "isKing":false}, "6e":"", "6d":{"team":"red", "isKing":false}, "6c":"", "6b":{"team":"red", "isKing":false}, "6a":"", 
