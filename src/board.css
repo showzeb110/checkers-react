@@ -115,3 +115,9 @@
 .black {
     background-color:black;
 }
+
+.king {
+    background-size: contain;
+    background-image: url( './royalty-crown.svg' );
+    background-repeat: no-repeat;
+}

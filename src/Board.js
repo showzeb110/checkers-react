@@ -192,34 +192,6 @@ function getNextMoves(team, locations, currentLoc) {
     return nextMoves;
 }
 
-function isNextMoveValid(locations, pieceLoc, selectionLoc) {
-    const piece = locations[pieceLoc];
-    const bottomLabel = ["h", "g", "f", "e", "d", "c", "b", "a"];
-
-    const pieceLocRow = parseInt(pieceLoc.substring(0, 1));
-    const pieceLocCol = pieceLoc.substring(1);
-    const pieceLocColIdx = bottomLabel.indexOf(pieceLocCol);
-    const selectionLocRow = parseInt(selectionLoc.substring(0, 1));
-    const selectionLocCol = selectionLoc.substring(1);
-    const selectionLocColIdx = bottomLabel.indexOf(selectionLocCol);
-
-    if (piece.team === "black") {
-        if(selectionLocRow > pieceLocRow && (selectionLocColIdx + 1 === pieceLocColIdx || selectionLocColIdx - 1 === pieceLocColIdx)) {
-            return true;
-        } else {
-            return false;
-        }
-    } else if (piece.team === "red") {
-        if(selectionLocRow < pieceLocRow && (selectionLocColIdx + 1 === pieceLocColIdx || selectionLocColIdx - 1 === pieceLocColIdx)) {
-            return true;
-        } else {
-            return false;
-        }
-    } else {
-        return false;
-    }
-}
-
 function createInitLocations() {
     return  {   "1h":"", "1g":{"team":"black", "isKing":false}, "1f":"", "1e":{"team":"black", "isKing":false}, "1d":"", "1c":{"team":"black", "isKing":false}, "1b":"", "1a":{"team":"black", "isKing":false}, 
                 "2h":{"team":"black", "isKing":false}, "2g":"", "2f":{"team":"black", "isKing":false}, "2e":"", "2d":{"team":"black", "isKing":false}, "2c":"", "2b":{"team":"black", "isKing":false}, "2a":"", 

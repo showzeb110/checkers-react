@@ -10,6 +10,9 @@ const Square = ({className, row, column, locations, onClick}) => {
         if (locations[row+column].isSelected) {
             isSelected = " selected";
         }
+        if (locations[row+column].isKing) {
+            isSelected += " king";
+        }
         return (
             <div className={squareClassname}>
                 <Piece 
