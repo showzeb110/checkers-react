@@ -13,7 +13,8 @@ class Board extends Component {
             currentSelection : "" ,
             nextMoves : null ,
             black : 12 ,
-            red : 12
+            red : 12 ,
+            multipleCheckers : false
         };
     }
     
@@ -21,12 +22,49 @@ class Board extends Component {
         console.log(row + " " + column);
         const key = row + column;
         if (this.state.currentSelection) {
+            if (this.state.currentSelection === key && !this.state.multipleCheckers) {
+                let teamStateCopy = JSON.parse(JSON.stringify(this.state.locations)) ;
+                teamStateCopy[key].isSelected = false;
+                this.setState({
+                    locations : teamStateCopy ,
+                    currentSelection : "" ,
+                    nextMoves : null ,
+                    multipleCheckers : false
+                });
+            }
+            else if (this.state.currentSelection === key && this.state.multipleCheckers) {
+                let teamStateCopy = JSON.parse(JSON.stringify(this.state.locations)) ;
+                teamStateCopy[key].isSelected = false;
+                this.setState({
+                    blackIsNext : !this.state.blackIsNext ,
+                    locations : teamStateCopy ,
+                    currentSelection : "" ,
+                    nextMoves : null ,
+                    multipleCheckers : false
+                });
+            }
+            else if (this.state.locations[this.state.currentSelection].team === this.state.locations[key].team && !this.state.multipleCheckers) {
+                let teamStateCopy = JSON.parse(JSON.stringify(this.state.locations)) ;
+                teamStateCopy[key].isSelected = true;
+                teamStateCopy[this.state.currentSelection].isSelected = false;
+                this.setState({
+                    locations : teamStateCopy ,
+                    currentSelection : key ,
+                    nextMoves : getNextMoves(this.state.locations[key].team, teamStateCopy, key)
+                });
+            }
             //User has previously clicked on valid piece and clicked on another square
-            if (this.state.nextMoves.hasOwnProperty(key)) {
+            else if (this.state.nextMoves.hasOwnProperty(key)) {
                 let teamStateCopy = JSON.parse(JSON.stringify(this.state.locations)) ;
                 let capturedChecker = this.state.nextMoves[key];
                 let red = this.state.red;
                 let black = this.state.black;
+                let currentSelectedPiece = teamStateCopy[this.state.currentSelection];
+                if (!currentSelectedPiece.isKing && 
+                        (currentSelectedPiece.team === "red" && row === "1") ||
+                        (currentSelectedPiece.team === "black" && row === "8")) {
+                    currentSelectedPiece.isKing = true;
+                }
                 if (capturedChecker !== "") {
                     if (teamStateCopy[capturedChecker].team === "red") {
                         red -= 1;
@@ -38,13 +76,24 @@ class Board extends Component {
                 teamStateCopy[key] = teamStateCopy[this.state.currentSelection];
                 teamStateCopy[key].isSelected = false;
                 teamStateCopy[this.state.currentSelection] = "";
+                let nextCapturableMoves = getNextMoves(teamStateCopy[key].team, teamStateCopy, key, true);
+                let multipleCheckers = false;
+                let blackIsNext = !this.state.blackIsNext ;
+                let currentSelection = "";
+                if (capturedChecker !== "" && Object.keys(nextCapturableMoves).length > 0) {
+                    multipleCheckers = true;
+                    blackIsNext = this.state.blackIsNext;
+                    currentSelection = key ;
+                    teamStateCopy[key].isSelected = true;
+                }
                 this.setState({
-                    blackIsNext : !this.state.blackIsNext ,
+                    blackIsNext : blackIsNext ,
                     locations : teamStateCopy ,
-                    currentSelection : "" ,
-                    nextMoves : null ,
+                    currentSelection : currentSelection ,
+                    nextMoves : nextCapturableMoves ,
                     red : red ,
-                    black : black
+                    black : black ,
+                    multipleCheckers : multipleCheckers
                 });
             }
         } else {
@@ -77,6 +126,14 @@ class Board extends Component {
         let status = 'Next player: ' + (this.state.blackIsNext ? 'black' : 'Red');
         let red = 'Red count: ' + this.state.red;
         let black = 'Black count: ' + this.state.black;
+        let multipleCheckerMessage = null;
+        let winningMessage = (this.state.red == 0 ? "Black Wins!!" : (this.state.black == 0 ? "Red Wins!!" : null));
+        if (winningMessage) {
+            status = winningMessage;
+        }
+        if (this.state.multipleCheckers == true) {
+            multipleCheckerMessage = <div>You can make another move or you can click on the selected Piece to move on</div>;
+        }
 
         return (
             <div>
@@ -114,13 +171,14 @@ class Board extends Component {
                     <div>{status}</div>
                     <div>{red}</div>
                     <div>{black}</div>
+                    {multipleCheckerMessage}
                 </div>
             </div>
         )
     }
 }
 
-function getNextMoves(team, locations, currentLoc) {
+function getNextMoves(team, locations, currentLoc, onlyCapturablePieces) {
     const piece = locations[currentLoc];
     const bottomLabel = ["h", "g", "f", "e", "d", "c", "b", "a"];
     const selectionLocRow = parseInt(currentLoc.substring(0, 1));
@@ -128,29 +186,29 @@ function getNextMoves(team, locations, currentLoc) {
     const selectionLocColIdx = bottomLabel.indexOf(selectionLocCol);
     let nextMoves = {};
 
-    if(team === "black") {
+    if(piece.isKing || team === "black") {
         //bottom-left
         let botLeft = (selectionLocRow + 1).toString() + bottomLabel[selectionLocColIdx - 1];
         let botLeftPiece = locations[botLeft];
         let botRight = (selectionLocRow + 1).toString() + bottomLabel[selectionLocColIdx + 1];
         let botRightPiece = locations[botRight];
 
-        if (botLeftPiece === "" || (botLeftPiece && botLeftPiece.team !== "black")) {
-            if (botLeftPiece === "") {
+        if (botLeftPiece === "" || (botLeftPiece && botLeftPiece.team !== team)) {
+            if (botLeftPiece === ""  && !onlyCapturablePieces) {
                 nextMoves[botLeft] = "";
             }
-            if (botLeftPiece.team === "red") {
+            if (botLeftPiece && botLeftPiece.team !== team && (piece.isKing || !botLeftPiece.isKing)) {
                 let botLeftBotLeft = (selectionLocRow + 1 + 1).toString() + bottomLabel[selectionLocColIdx - 2];
                 if (locations[botLeftBotLeft] === "") {
                     nextMoves[botLeftBotLeft] = botLeft;
                 }
             }
         }
-        if (botRightPiece === ""  || (botRightPiece && botRightPiece.team !== "black")) {
-            if (botRightPiece === "") {
+        if (botRightPiece === ""  || (botRightPiece && botRightPiece.team !== team)) {
+            if (botRightPiece === "" && !onlyCapturablePieces) {
                 nextMoves[botRight] = "";
             }
-            if (botRightPiece.team === "red") {
+            if (botRightPiece && botRightPiece.team !== team && (piece.isKing || !botRightPiece.isKing)) {
                 let botRightBotRight = (selectionLocRow + 1 + 1).toString() + bottomLabel[selectionLocColIdx + 2];
                 if (locations[botRightBotRight] === "") {
                     nextMoves[botRightBotRight] = botRight;
@@ -159,29 +217,29 @@ function getNextMoves(team, locations, currentLoc) {
         }
     }
 
-    if(team === "red") {
+    if(piece.isKing || team === "red") {
         //bottom-left
         let topLeft = (selectionLocRow - 1).toString() + bottomLabel[selectionLocColIdx - 1];
         let topLeftPiece = locations[topLeft];
         let topRight = (selectionLocRow - 1).toString() + bottomLabel[selectionLocColIdx + 1];
         let topRightPiece = locations[topRight];
 
-        if (topLeftPiece === "" || (topLeftPiece && topLeftPiece.team !== "red")) {
-            if (topLeftPiece === "") {
+        if (topLeftPiece === "" || (topLeftPiece && topLeftPiece.team !== team)) {
+            if (topLeftPiece === "" && !onlyCapturablePieces) {
                 nextMoves[topLeft] = "";
             }
-            if (topLeftPiece.team === "black") {
+            if (topLeftPiece && topLeftPiece.team !== team && (piece.isKing || !topLeftPiece.isKing)) {
                 let topLeftTopLeft = (selectionLocRow - 1 - 1).toString() + bottomLabel[selectionLocColIdx - 2];
                 if (locations[topLeftTopLeft] === "") {
                     nextMoves[topLeftTopLeft] = topLeft;
                 }
             }
         }
-        if (topRightPiece === "" || (topRightPiece && topRightPiece.team !== "red")) {
-            if (topRightPiece === "") {
+        if (topRightPiece === "" || (topRightPiece && topRightPiece.team !== team)) {
+            if (topRightPiece === "" && !onlyCapturablePieces) {
                 nextMoves[topRight] = "";
             }
-            if (topRightPiece.team === "black") {
+            if (topRightPiece && topRightPiece.team !== team && (piece.isKing || !topRightPiece.isKing)) {
                 let topRightTopRight = (selectionLocRow - 1 - 1).toString() + bottomLabel[selectionLocColIdx + 2];
                 if (locations[topRightTopRight] === "") {
                     nextMoves[topRightTopRight] = topRight;

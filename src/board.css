@@ -75,7 +75,7 @@
 }
 
 .selected {
-    background: blue;
+    background: blue !important;
 }
 
 .piece {
